@@ -32,3 +32,4 @@ t4.read("A")
 
 result2 = validator.validate(t4, [t3])
 print("T4 validation result:", result2)
+print("Stored versions:", mvcc.versions)
