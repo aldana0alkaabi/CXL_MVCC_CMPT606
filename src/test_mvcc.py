@@ -14,8 +14,11 @@ t2.read("A")
 mvcc = MVCC()
 validator = MVCCValidator()
 
-#Store a version
+#Store a version of A
 mvcc.write_version("A", 100, t1.transaction_id)
+
+#Store a second version of A
+mvcc.write_version("A", 200, t2.transaction_id) 
 
 #Validate T2
 result = validator.validate(t2, [t1])
