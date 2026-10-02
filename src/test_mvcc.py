@@ -22,3 +22,13 @@ result = validator.validate(t2, [t1])
 
 #Print result
 print("T2 validation result:", result)
+
+#Test transactions with conflicts
+t3 = Transaction("T3")
+t4 = Transaction("T4")
+
+t3.write("B")
+t4.read("A")
+
+result2 = validator.validate(t4, [t3])
+print("T4 validation result:", result2)
