@@ -2,31 +2,32 @@ from transaction import Transaction
 from mvcc import MVCC
 from validator import MVCCValidator
 
-#Create transaction
+# Create transaction
 t1 = Transaction("T1")
 t2 = Transaction("T2")
 
-#Define operations
+# Define operations
 t1.write("A")
+t1.commit()
 t2.read("A")
 
-#Create MVCC and validator
+# Create MVCC and validator
 mvcc = MVCC()
 validator = MVCCValidator()
 
-#Store a version of A
+# Store a version of A
 mvcc.write_version("A", 100, t1.transaction_id)
 
-#Store a second version of A
+# Store a second version of A
 mvcc.write_version("A", 200, t2.transaction_id) 
 
-#Validate T2
+# Validate T2
 result = validator.validate(t2, [t1])
 
-#Print result
+# Print result
 print("T2 validation result:", result)
 
-#Test transactions with conflicts
+# Test transactions with conflicts
 t3 = Transaction("T3")
 t4 = Transaction("T4")
 
@@ -37,6 +38,6 @@ result2 = validator.validate(t4, [t3])
 print("T4 validation result:", result2)
 print("Stored versions:", mvcc.versions)
 
-#Test reading the latest version
+# Test reading the latest version
 latest = mvcc.read_latest_version("A")
 print("Latest version of A:", latest)
