@@ -23,7 +23,7 @@ class MVCCValidator:
             if transaction.write_set & other.write_set:
                 return False
 
-            #Write-Read Conflict
+            # Write-Read Conflict
             if transaction.write_set & other.read_set:
                 return False
 
