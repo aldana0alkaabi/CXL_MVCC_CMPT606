@@ -2,12 +2,29 @@ import time
 import statistics
 import csv
 import os
+import sys
+sys.path.append("src")
+from transaction import Transaction
+from validator import MVCCValidator
 
 def run_test(number_of_transactions):
     start_time = time.perf_counter()
 
+    validator = MVCCValidator()
+    other_transactions = []
+
     for i in range(number_of_transactions):
-        transaction_id = i
+        transaction = Transaction(i)
+        transaction.write(f"key_{i}")
+
+        start_validation_time = time.perf_counter()
+        is_valid = validator.validate(transaction, other_transactions)
+        if is_valid:
+            transaction.commit()
+        else:
+            transaction.abort() 
+        other_transactions.append(transaction)
+   
 
     elapsed_time = time.perf_counter() - start_time
 
