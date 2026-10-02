@@ -1,5 +1,7 @@
 import time 
 import statistics
+import csv
+import os
 
 def run_test(number_of_transactions):
     start_time = time.perf_counter()
@@ -20,11 +22,24 @@ def run_test(number_of_transactions):
 def main():
     test_sizes = [1000, 5000, 10000]
 
+    output_dir = "results/raw"
+    os.makedirs(output_dir, exist_ok=True)
+
+    csv_file = os.path.join(output_dir, "benchmark_results.csv")
+
     print("Basic Benchmark Results")
     print("-" * 40)
 
-    for size in test_sizes:
-        results = run_test(size)
+    with open(csv_file, mode='w', newline="") as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=["transaction", "elapsed_time", "throughput"]
+        )
+        writer.writeheader()
+
+        for size in test_sizes:
+            results = run_test(size)
+            writer.writerow(results)
 
         print(
             f"Transactions: {results['transaction']},"
