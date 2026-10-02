@@ -33,3 +33,7 @@ t4.read("A")
 result2 = validator.validate(t4, [t3])
 print("T4 validation result:", result2)
 print("Stored versions:", mvcc.versions)
+
+#Test reading the latest version
+latest = mvcc.read_latest_version("A")
+print("Latest version of A:", latest)

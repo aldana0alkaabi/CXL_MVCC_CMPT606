@@ -7,7 +7,7 @@ class MVCC:
         if key not in self.versions:
             self.versions[key] = []
 
-        version_id = len(self.versions[key]) + 1
+        version_id = self.next_version_id
 
         self.versions[key].append({
         "value": value,
@@ -16,4 +16,9 @@ class MVCC:
         })
 
         self.next_version_id += 1
+
+    def read_latest_version(self, key):
+        if key not in self.versions:
+            return None
+        return self.versions[key][-1]
 
