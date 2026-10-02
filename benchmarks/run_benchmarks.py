@@ -13,11 +13,14 @@ def run_test(number_of_transactions):
     validator = MVCCValidator()
     other_transactions = []
     validation_latencies = []
+    trace_logs = []
 
 
     for i in range(number_of_transactions):
         transaction = Transaction(i)
         transaction.write(f"key_{i}")
+        
+        timestamp = time.time()
 
         start_validation_time = time.perf_counter()
         is_valid = validator.validate(transaction, other_transactions)
@@ -30,7 +33,33 @@ def run_test(number_of_transactions):
         else:
             transaction.abort() 
         other_transactions.append(transaction)
-   
+
+        trace_logs.append({
+            "transaction_id": i,
+            "timestamp": timestamp,
+            "validation_latency": validation_latency,
+            "status": transaction.status
+        })
+
+        trace_file = "logs/execution_trace.csv"
+        os.makedirs("logs", exist_ok=True)
+
+        with open(trace_file, mode="a", newline="") as file:
+            writer = csv.DictWriter(
+                file,
+                fieldnames=[
+                    "transaction_id",
+                    "timestamp",
+                    "validation_latency",
+                    "status"
+                ]
+            )
+
+            if file.tell() == 0:
+                writer.writeheader()
+            
+            writer.writerows(trace_logs)
+
 
     elapsed_time = time.perf_counter() - start_time
 
