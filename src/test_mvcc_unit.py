@@ -55,6 +55,21 @@ class TestMVCC(unittest.TestCase):
 
         self.assertFalse(validator.validate(tx2, [tx1]))
 
+    def test_shared_memory_between_hosts(self):
+        from cxl_shared_memory import CXLSharedMemory
+
+        shared_memory = CXLSharedMemory()
+        mvcc_host1 = MVCC(shared_memory=shared_memory, host_id=1)
+        mvcc_host2 = MVCC(shared_memory=shared_memory, host_id=2)
+
+        mvcc_host1.write_version("A", 100, "T1")
+
+        result = mvcc_host2.read_latest_version("A")
+
+        self.assertEqual(result["value"], 100)
+        self.assertEqual(result["host_id"], 1)
+
+
 
 if __name__ == "__main__":
     unittest.main()

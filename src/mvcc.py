@@ -1,24 +1,25 @@
+try:
+    from .cxl_shared_memory import CXLSharedMemory
+except ImportError:
+    from cxl_shared_memory import CXLSharedMemory
+
 class MVCC:
-    def __init__(self):
-        self.versions = {}
-        self.next_version_id = 1
+    def __init__(self, shared_memory=None, host_id=0):
+        self.shared_memory = (
+            shared_memory if shared_memory is not None
+            else CXLSharedMemory()
+        )
+        self.host_id = host_id
 
     def write_version(self, key, value, transaction_id):
-        if key not in self.versions:
-            self.versions[key] = []
-
-        version_id = self.next_version_id
-
-        self.versions[key].append({
-        "value": value,
-        "transaction_id": transaction_id,
-        "version_id": version_id
-        })
-
-        self.next_version_id += 1
+        return self.shared_memory.write(
+            host_id=self.host_id,
+            key=key,
+            value=value,
+            transaction_id=transaction_id   
+        )
 
     def read_latest_version(self, key):
-        if key not in self.versions:
-            return None
-        return self.versions[key][-1]
+        return self.shared_memory.read_latest(key)
+    
 
