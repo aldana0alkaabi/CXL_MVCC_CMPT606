@@ -55,5 +55,6 @@ class TestMVCC(unittest.TestCase):
 
         self.assertFalse(validator.validate(tx2, [tx1]))
 
+
 if __name__ == "__main__":
     unittest.main()
