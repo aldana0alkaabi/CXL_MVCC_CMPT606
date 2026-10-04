@@ -69,6 +69,21 @@ class TestMVCC(unittest.TestCase):
         self.assertEqual(result["value"], 100)
         self.assertEqual(result["host_id"], 1)
 
+    def test_benchmark_cxl_shared_memory(self):
+        from src.cxl_shared_memory import CXLSharedMemory
+        from src.mvcc import MVCC
+
+        shared = CXLSharedMemory()
+        mvcc = MVCC(shared_memory=shared, host_id=1)
+
+        mvcc.write_version("benchmark_key", 10, 1)
+
+        result = mvcc.read_latest_version("benchmark_key")
+
+        assert result["value"] == 10
+        assert result ["host_id"] == 1
+        assert shared.get_stats()["total_versions"] == 1
+
 
 
 if __name__ == "__main__":

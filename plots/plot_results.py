@@ -10,6 +10,9 @@ throughput = []
 p50 = []
 p90 = []
 p99 = []
+cxl_p50 = []
+cxl_p90 = []
+cxl_p99 = []
 
 with open(csv_file, "r" , newline="") as file:
     reader = csv.DictReader(file)
@@ -20,6 +23,10 @@ with open(csv_file, "r" , newline="") as file:
         p50.append(float(row['p50_latency']) * 1000)
         p90.append(float(row['p90_latency']) * 1000)
         p99.append(float(row['p99_latency']) * 1000)
+        cxl_p50.append(0)
+        cxl_p90.append(0)
+        cxl_p99.append(0)
+
 
 os.makedirs("plots", exist_ok=True)
 

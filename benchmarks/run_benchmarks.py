@@ -6,20 +6,39 @@ import sys
 sys.path.append("src")
 from transaction import Transaction
 from validator import MVCCValidator
+from mvcc import MVCC
+from cxl_shared_memory import CXLSharedMemory
 
 def run_test(number_of_transactions):
     start_time = time.perf_counter()
 
     validator = MVCCValidator()
+    shared_memory = CXLSharedMemory()
+    mvcc = MVCC(shared_memory=shared_memory, host_id=1)
     other_transactions = []
     validation_latencies = []
     trace_logs = []
+    cxl_latencies = []
 
 
     for i in range(number_of_transactions):
         transaction = Transaction(i)
         transaction.write(f"key_{i}")
-        
+
+        cxl_start = time.perf_counter()
+
+        mvcc.write_version(
+            key=f"key_{i}",
+            value=i,
+            transaction_id=transaction.transaction_id
+        )
+
+        mvcc.read_latest_version(f"key_{i}")
+
+        cxl_latency = time.perf_counter() - cxl_start
+        cxl_latencies.append(cxl_latency)
+
+
         timestamp = time.time()
 
         start_validation_time = time.perf_counter()
@@ -71,7 +90,11 @@ def run_test(number_of_transactions):
         "throughput": throughput,
         "p50_latency": statistics.median(validation_latencies),
         "p90_latency": statistics.quantiles(validation_latencies, n=10)[8],
-        "p99_latency": statistics.quantiles(validation_latencies, n=100)[98]
+        "p99_latency": statistics.quantiles(validation_latencies, n=100)[98],
+        "cxl_p50_latency": statistics.median(cxl_latencies),
+        "cxl_p90_latency": statistics.quantiles(cxl_latencies, n=10)[8],
+        "cxl_p99_latency": statistics.quantiles(cxl_latencies, n=100)[98],
+
     }
 
 def main():
@@ -88,7 +111,16 @@ def main():
     with open(csv_file, mode='w', newline="") as file:
         writer = csv.DictWriter(
             file,
-            fieldnames=["transaction", "elapsed_time", "throughput", "p50_latency", "p90_latency", "p99_latency"]
+            fieldnames=["transaction",
+                        "elapsed_time",
+                        "throughput", 
+                        "p50_latency", 
+                        "p90_latency", 
+                        "p99_latency", 
+                        "cxl_p50_latency",
+                        "cxl_p90_latency",
+                        "cxl_p99_latency",
+                        ]
         )
         writer.writeheader()
 
@@ -102,8 +134,13 @@ def main():
             f"Throughput: {results['throughput']:.2f} transactions/second,"
             f"P50 Latency: {results['p50_latency']:.8f} seconds,"
             f"P90 Latency: {results['p90_latency']:.8f} seconds,"
-            f"P99 Latency: {results['p99_latency']:.8f} seconds"
+            f"P99 Latency: {results['p99_latency']:.8f} seconds,"
+            f"CXL P50 Latency: {results['cxl_p50_latency']:.8f} seconds,"
+            f"CXL P90 Latency: {results['cxl_p90_latency']:.8f} seconds,"
+            f"CXL P99 Latency: {results['cxl_p99_latency']:.8f} seconds"
         )
+
+
 
 if __name__ == "__main__":
     main()
