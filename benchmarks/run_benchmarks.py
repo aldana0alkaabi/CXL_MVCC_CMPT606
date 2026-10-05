@@ -53,6 +53,7 @@ def run_test(number_of_transactions):
             transaction.abort() 
         other_transactions.append(transaction)
 
+    if i % 100 == 0:
         trace_logs.append({
             "transaction_id": i,
             "timestamp": timestamp,
@@ -103,7 +104,7 @@ def main():
     output_dir = "results/raw"
     os.makedirs(output_dir, exist_ok=True)
 
-    csv_file = os.path.join(output_dir, "benchmark_results.csv")
+    csv_file = os.path.join(output_dir, "benchmark_results_cxl.csv")
 
     print("Basic Benchmark Results")
     print("-" * 40)
