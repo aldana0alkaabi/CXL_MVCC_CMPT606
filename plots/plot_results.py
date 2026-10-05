@@ -14,6 +14,8 @@ cxl_transactions = []
 cxl_p50 = []
 cxl_p90 = []
 cxl_p99 = []
+cxl_throughput = []
+
 
 with open(csv_file, "r" , newline="") as file:
     reader = csv.DictReader(file)
@@ -36,17 +38,22 @@ with open(cxl_file, "r", newline="") as file:
 
     for row in reader:
         cxl_transactions.append(float(row['transaction']))
+        cxl_throughput.append(float(row['throughput']))
         cxl_p50.append(float(row['cxl_p50_latency']) * 1000)
         cxl_p90.append(float(row['cxl_p90_latency']) * 1000)
         cxl_p99.append(float(row['cxl_p99_latency']) * 1000)
 
-# Plot 1: Throughput
+# Plot 1: Baseline vs CXL Throughput
 plt.figure()
 
-plt.plot(transactions, throughput, marker='o')
+plt.plot(transactions, throughput, marker='o', label ='Baseline')
+plt.plot(cxl_transactions, cxl_throughput, marker='s', linestyle='--', label='CXL')
+
+plt.plot
 plt.xlabel("Number of Transactions")
 plt.ylabel("Throughput (transactions/second)")
-plt.title("Throughput vs Number of Transactions")
+plt.title("Baseline vs CXL Throughput")
+plt.legend()
 plt.grid(True)
 plt.tight_layout ()
 plt.savefig("plots/throughput_vs_transactions.png")

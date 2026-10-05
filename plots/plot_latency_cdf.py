@@ -25,10 +25,10 @@ cdf = [(i + 1) / len(latencies) * 100
 os.makedirs("plots", exist_ok=True)
 
 plt.figure(figsize=(8, 5))
-plt.plot(latencies, cdf, label="MVCC Prototype (Sample)")
+plt.plot(latencies, cdf, label="CXL MVCC (Sample)")
 plt.xlabel("Validation Latency (ms)")
 plt.ylabel("Cumulative Percentage (%)")
-plt.title("Latency CDF")
+plt.title("CXL MVCC Validation Latency CDF")
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
