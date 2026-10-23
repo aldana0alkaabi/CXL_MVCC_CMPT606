@@ -1,6 +1,11 @@
 from threading import RLock
 
 try:
+    from.metadata_store import MetadataStore
+except ImportError:
+    from metadata_store import MetadataStore
+
+try:
     from .validator import MVCCValidator
 except ImportError:
     from validator import MVCCValidator
@@ -15,6 +20,7 @@ class CXLSharedMemory:
         self._memory = {}
         self._lock = RLock()
         self._next_version_id = 1
+        self.metadata_store = MetadataStore()
 
     def write(self, host_id, key, value, transaction_id):
         """Write a version to the shared-memory region."""
@@ -66,7 +72,10 @@ class CXLSharedMemory:
             if not hasattr(self, "_committed_transactions"):
                 self._committed_transactions = []
 
-            validator = MVCCValidator()
+            validator = MVCCValidator(
+                metadata_store=self.metadata_store,
+                metadata_location="cxl"
+            )
 
             if not validator.validate(
                 transaction, self._committed_transactions
@@ -85,4 +94,18 @@ class CXLSharedMemory:
                 )
 
             self._committed_transactions.append(transaction)
+
+            for key in transaction.read_set | transaction.write_set:
+                self.metadata_store.append(
+                    key,
+                    {
+                        "transaction_id": transaction.transaction_id,
+                        "status": transaction.status,
+                        "start_timestamp": transaction.start_timestamp,
+                        "commit_timestamp": transaction.commit_timestamp,
+                        "write_set": list(transaction.write_set),
+                        "read_set": list(transaction.read_set),
+                    },
+                    location="cxl"
+                )
             return True

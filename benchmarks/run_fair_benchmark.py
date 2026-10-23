@@ -11,21 +11,33 @@ from transaction import Transaction
 from logical_clock import LogicalClock
 from cxl_shared_memory import CXLSharedMemory
 from validator import MVCCValidator
-from threading import Lock
+from threading import RLock
 
 class BaselineSharedMemory:
     def __init__(self):
-        self._lock = Lock()
+        self._lock = RLock()
         self._memory = {}
+        self._next_version_id = 1
         self._committed_transactions = []
 
-    def write(self, key, value):
+    def write(self, key, value, transaction_id=None):
         with self._lock:
-            self._memory[key] = value
+            version = {
+                "key": key,
+                "value": value,
+                "host_id": 0,
+                "transaction_id": transaction_id,
+                "version_id": self._next_version_id
+            }
+            
+            self._memory.setdefault(key, []).append(version)
+            self._next_version_id += 1
+            return version.copy()
 
     def read(self, key):
         with self._lock:
-            return self._memory.get(key)
+            versions = self._memory.get(key, [])
+            return versions[-1]["value"] if versions else None
 
     def commit_transaction(self, transaction, writes):
         with self._lock:
@@ -47,7 +59,11 @@ class BaselineSharedMemory:
             transaction.commit()
 
             for key, value in writes.items():
-                self._memory[key] = value
+                self.write(
+                    key=key,
+                    value=value,
+                    transaction_id=transaction.transaction_id
+                )
 
             self._committed_transactions.append(transaction)
             return True
@@ -64,9 +80,12 @@ def create_workload(number_of_transactions, clock, number_of_keys=10):
 def run_benchmark(memory_class, number_of_transactions, number_of_keys=10):
     clock = LogicalClock()
     shared_memory = memory_class()
-    transactions = create_workload(number_of_transactions, clock, number_of_keys)
+    transactions = create_workload(
+        number_of_transactions, clock, number_of_keys
+    )
 
     def commit_worker(tx):
+    
         start = time.perf_counter()
 
         success = shared_memory.commit_transaction(
@@ -118,7 +137,7 @@ def main():
     output_dir = "results/fair_benchmark"
     os.makedirs(output_dir, exist_ok=True)
 
-    csv_file = os.path.join(output_dir, "benchmark_results.csv")
+    csv_file = os.path.join(output_dir, "benchmark_results_prepared_workload.csv")
     all_results = []
 
     for size in test_sizes:
