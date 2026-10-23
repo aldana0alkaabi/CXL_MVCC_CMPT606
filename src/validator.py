@@ -13,7 +13,15 @@ class MVCCValidator:
 
             # Ignore active transactions for this basic test
             if other.status != "committed":
-                continue    
+                continue  
+            if (
+                transaction.start_timestamp is not None
+                and other.commit_timestamp is not None
+                and transaction.clock is not None
+                and transaction.clock is other.clock
+                and other.commit_timestamp < transaction.start_timestamp
+            ):
+                continue  
 
             # Read-Write Conflict
             if transaction.read_set & other.write_set:

@@ -1,5 +1,10 @@
 from threading import RLock
 
+try:
+    from .validator import MVCCValidator
+except ImportError:
+    from validator import MVCCValidator
+
 class CXLSharedMemory:
     """
     Simulate a CXL shared-memory region accsseible by multiple hosts.
@@ -49,3 +54,35 @@ class CXLSharedMemory:
                     len(versions) for versions in self._memory.values()
                 ),
             }
+
+    def commit_transaction(self, transaction, writes):
+        with self._lock:
+            if transaction.status != "active":
+                return False
+
+            if set(writes) != transaction.write_set:
+                raise ValueError("Write do not match transaction write_set")
+
+            if not hasattr(self, "_committed_transactions"):
+                self._committed_transactions = []
+
+            validator = MVCCValidator()
+
+            if not validator.validate(
+                transaction, self._committed_transactions
+            ):
+                transaction.abort()
+                return False
+
+            transaction.commit()
+
+            for key, value in writes.items():
+                self.write(
+                    host_id=0,
+                    key=key,
+                    value=value,
+                    transaction_id=transaction.transaction_id
+                )
+
+            self._committed_transactions.append(transaction)
+            return True
