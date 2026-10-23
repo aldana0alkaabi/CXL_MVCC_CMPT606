@@ -151,6 +151,32 @@ class TestConcurrentMVCC(unittest.TestCase):
          versions = shared_memory.read_all_versions("A")
          self.assertEqual(len(versions), 1)
 
+    def test_atomic_commit_stress(self):
+         clock = LogicalClock()
+         shared_memory = CXLSharedMemory()
+
+         transactions = [
+              Transaction(i, clock) for i in range(100)
+         ]
+
+         for tx in transactions:
+              tx.write("A")
+         def commit_worker(tx):
+             return shared_memory.commit_transaction(
+                 tx, {"A": tx.transaction_id}
+             )
+
+         with ThreadPoolExecutor(max_workers=10) as executor:
+              results = list(executor.map(
+                   commit_worker, transactions
+              ))
+
+         self.assertEqual(results.count(True), 1)
+         self.assertEqual(results.count(False), 99)
+
+         versions = shared_memory.read_all_versions("A")
+         self.assertEqual(len(versions), 1)
+
     if __name__ == "__main__":
         unittest.main()
  
