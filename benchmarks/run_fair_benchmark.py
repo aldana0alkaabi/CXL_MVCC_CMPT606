@@ -77,7 +77,7 @@ def create_workload(number_of_transactions, clock, number_of_keys=10):
         transactions.append(tx)
     return transactions
 
-def run_benchmark(memory_class, number_of_transactions, number_of_keys=10):
+def run_benchmark(memory_class, number_of_transactions, number_of_keys=10, max_workers=10):
     clock = LogicalClock()
     shared_memory = memory_class()
     transactions = create_workload(
@@ -97,7 +97,7 @@ def run_benchmark(memory_class, number_of_transactions, number_of_keys=10):
 
     start_time = time.perf_counter()
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         results = list(executor.map(commit_worker, transactions))
 
     elapsed_time = time.perf_counter() - start_time

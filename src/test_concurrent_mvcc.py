@@ -177,6 +177,35 @@ class TestConcurrentMVCC(unittest.TestCase):
          versions = shared_memory.read_all_versions("A")
          self.assertEqual(len(versions), 1)
 
+    
+    def test_concurrent_independent_commits(self):
+        clock = LogicalClock()
+        shared_memory = CXLSharedMemory()
+
+        transactions = [
+            Transaction(i, clock) for i in range(100)
+        ]
+
+        for tx in transactions:
+            tx.write(f"key_{tx.transaction_id}")
+
+        def commit_worker(tx):
+            key = f"key_{tx.transaction_id}"
+            return shared_memory.commit_transaction(
+                tx, {key: tx.transaction_id}
+            )
+
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            results = list(executor.map(
+                commit_worker, transactions
+            ))
+
+        self.assertEqual(results.count(True), 100)
+        self.assertEqual(results.count(False), 0)
+        self.assertEqual(
+            shared_memory.get_stats()["total_versions"], 100
+        )
+
     if __name__ == "__main__":
         unittest.main()
  

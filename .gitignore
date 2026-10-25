@@ -1,3 +1,16 @@
+# Large execution traces
 logs/execution_trace.csv
 
-logs/execution_trace.csv
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# macOS files
+.DS_Store
+
+# Temporary checkpoint files
+.checkpoint_*.tmp

@@ -1,13 +1,20 @@
 class MVCCValidator:
 
-    def __init__(self, metadata_store=None, metadata_location="local"):
+    def __init__(self, metadata_store=None, metadata_location="local", enable_metadata_validation=True):
         if metadata_location not in ("local", "cxl"):
             raise ValueError("Unsupported metadata location")
 
+        if metadata_location not in ("local", "cxl"):
+            raise ValueError("Unsupported metadata location")
         self.metadata_store = metadata_store
         self.metadata_location = metadata_location
+        self.enable_metadata_validation = enable_metadata_validation
 
+    
     def read_metadata(self, key):
+        if not self.enable_metadata_validation:
+            return None
+
         if self.metadata_store is None:
             return None
 
@@ -15,6 +22,7 @@ class MVCCValidator:
             key,
             location=self.metadata_location
         )
+
 
     def read_committed_metadata(self, key):
         records = self.read_metadata(key)
