@@ -78,3 +78,9 @@ Figures and plotting scripts are located in `plots/`.
 - Some prepared workloads intentionally produce high contention.
 - The ablation disables metadata reads during validation, not metadata writes or all conflict checks.
 ```
+
+## Optional simulated metadata-access delay (revision)
+
+`CXLSharedMemory(cxl_access_delay_us=50)` charges a **software sleep** per CXL metadata `get`, `put`, or `append` operation; default is zero. This is a configurable sensitivity parameter, **not a calibrated model of CXL latency or bandwidth**. The local baseline remains unchanged. The delay is charged outside the metadata-store lock, but transaction commit still uses a single RLock. OS sleep scheduling and Python overhead can dominate small delay values.
+
+Run `python benchmarks/run_cxl_delay_sensitivity.py` to generate a separate CSV without overwriting the original paper results. The illustrative delay settings (0, 50, 200 microseconds) are not hardware measurements. The benchmark uses execution-start timestamps, 100 transactions, 20 keys, 4 threads, and 5 repetitions.

@@ -77,15 +77,22 @@ def create_workload(number_of_transactions, clock, number_of_keys=10):
         transactions.append(tx)
     return transactions
 
-def run_benchmark(memory_class, number_of_transactions, number_of_keys=10, max_workers=10):
+def run_benchmark(memory_class, number_of_transactions, number_of_keys=10, max_workers=10, timestamp_mode="prepared", memory_kwargs=None):
+    if timestamp_mode not in ("prepared", "execution_start"):
+        raise ValueError("Unsupported timestamp_mode")
     clock = LogicalClock()
-    shared_memory = memory_class()
+    shared_memory = memory_class(**(memory_kwargs or {}))
     transactions = create_workload(
         number_of_transactions, clock, number_of_keys
-    )
+    ) if timestamp_mode == "prepared" else list(range(number_of_transactions))
 
-    def commit_worker(tx):
-    
+    def commit_worker(item):
+        if timestamp_mode == "execution_start":
+            tx = Transaction(item, clock)
+            tx.write(f"key_{item % number_of_keys}")
+        else:
+            tx = item
+
         start = time.perf_counter()
 
         success = shared_memory.commit_transaction(
@@ -115,6 +122,7 @@ def run_benchmark(memory_class, number_of_transactions, number_of_keys=10, max_w
 
     return {
         "transactions": number_of_transactions,
+        "timestamp_mode": timestamp_mode,
         "successful_commits": successful_commit,
         "aborted_transactions": aborted_transactios,
         "elapsed_time": elapsed_time,

@@ -28,11 +28,11 @@ class CXLSharedMemory:
     This is a software simulation, not a real CXL hardware.
     """
 
-    def __init__(self, enable_metadata_validation=True):
+    def __init__(self, enable_metadata_validation=True, cxl_access_delay_us=0.0):
         self._memory = {}
         self._lock = RLock()
         self._next_version_id = 1
-        self.metadata_store = MetadataStore()
+        self.metadata_store = MetadataStore(cxl_access_delay_us=cxl_access_delay_us)
         self.enable_metadata_validation = enable_metadata_validation
         self._committed_transactions = []
 
