@@ -30,7 +30,7 @@ Run all unit tests:
 python -m pytest -q
 ```
 
-The latest verified test run completed with 25 passing tests.
+The latest verified test run completed with 31 passing tests.
 
 ## Experiments
 
